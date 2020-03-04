@@ -20,6 +20,6 @@ RUN python3 -m pip install git+https://github.com/piotrmilos/football.git
 RUN python3 -m pip install git+https://github.com/openai/baselines.git
 RUN python3 -m pip install ray[rllib]
 RUN python3 -m pip install psutil
-
+RUN git clone https://github.com/piotrmilos/football.git
 
 WORKDIR '/root'
