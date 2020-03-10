@@ -34,7 +34,6 @@ Player::Player(Team *team, PlayerData *playerData)
     : PlayerBase(team->GetMatch(), playerData), team(team) {
   DO_VALIDATION;
   SetDesiredTimeToBall_ms(0);
-  nameCaption = 0;
 
   triggerControlledBallCollision = false;
 
@@ -45,15 +44,17 @@ Player::Player(Team *team, PlayerData *playerData)
   cards = 0;
 
   cardEffectiveTime_ms = 0;
+  nameCaption = new Gui2Caption(GetMenuTask()->GetWindowManager(),
+                                "game_player_name_" + int_to_str(stable_id), 0,
+                                0, 1, 2.0, playerData->GetLastName());
+  nameCaption->SetTransparency(0.3f);
+  GetMenuTask()->GetWindowManager()->GetRoot()->AddView(nameCaption);
 }
 
 Player::~Player() {
   DO_VALIDATION;
-  if (nameCaption) {
-    DO_VALIDATION;
-    nameCaption->Exit();
-    delete nameCaption;
-  }
+  nameCaption->Exit();
+  delete nameCaption;
 }
 
 Humanoid *Player::CastHumanoid() {
@@ -103,10 +104,7 @@ void Player::Activate(boost::intrusive_ptr<Node> humanoidSourceNode,
   controller.reset(new ElizaController(match, lazyPlayer));
   CastController()->SetPlayer(this);
   buf_nameCaptionShowCondition = false;
-
-  nameCaption = new Gui2Caption(GetMenuTask()->GetWindowManager(), "game_player_name_" + int_to_str(stable_id), 0, 0, 1, 2.0, playerData->GetLastName());
-  nameCaption->SetTransparency(0.3f);
-  GetMenuTask()->GetWindowManager()->GetRoot()->AddView(nameCaption);
+  nameCaption->Show();
   CastHumanoid()->ResetPosition(
       GetFormationEntry().position * 25 *
           Vector3(-team->GetDynamicSide(), -team->GetDynamicSide(), 0),
@@ -117,10 +115,7 @@ void Player::Activate(boost::intrusive_ptr<Node> humanoidSourceNode,
 void Player::Deactivate() {
   DO_VALIDATION;
   ResetSituation(GetPosition());
-  nameCaption->Exit();
-  delete nameCaption;
-  nameCaption = 0;
-
+  nameCaption->Hide();
   if (team->IsHumanControlled(this)) {
     DO_VALIDATION;
     team->DeselectPlayer(this); // don't want any humangamer to have control of this player anymore
@@ -173,7 +168,7 @@ float Player::GetAverageVelocity(float timePeriod_sec) {
 
 void Player::UpdatePossessionStats() {
   DO_VALIDATION;
-  timeNeededToGetToBall_previous_ms = timeNeededToGetToBall_ms;
+  timeNeededToGetToBall_previous_ms = timeNeededToGetToBall_ms; // todo: this will fail to function as intended when this function is ran multiple times consecutively
 
   // default
   timeNeededToGetToBall_ms = std::max(
@@ -270,12 +265,12 @@ void Player::UpdatePossessionStats() {
       !TouchPending()) {
     DO_VALIDATION;
     hasPossession = false;
-  } else {
+  } else {  // todo: shouldn't this be somewhere else?
     hasPossession = AI_HasPossession(match->GetBall(), this);
   }
 
   this->hasBestPossession = hasPossession && match->GetTeam(abs(team->GetID() - 1))->GetTimeNeededToGetToBall_ms() > this->GetTimeNeededToGetToBall_ms();
-  this->hasUniquePossession = hasPossession && !match->GetTeam(abs(team->GetID() - 1))->HasPossession();
+  this->hasUniquePossession = hasPossession && !match->GetTeam(abs(team->GetID() - 1))->HasPossession(); // todo: this should be in a seperate function, to be called after the other team's timetoball function already ran.
 
   if (match->GetBallRetainer() == this) {
     DO_VALIDATION;
@@ -375,11 +370,9 @@ void Player::PreparePutBuffers() {
     if (static_cast<HumanController *>(GetExternalController())
             ->GetActionMode() == 1) {
       DO_VALIDATION;
-      //buf_nameCaption += " X";
     } else if (static_cast<HumanController *>(GetExternalController())
                    ->GetActionMode() == 2) {
       DO_VALIDATION;
-      //buf_nameCaption += " !";
       buf_playerColor =
           buf_playerColor *
           (std::sin(match->GetActualTime_ms() * 0.02f) * 0.3f + 0.7f);
@@ -460,7 +453,7 @@ float Player::GetStaminaStat() const {
 
 float Player::GetStat(PlayerStat name) const {
   float multiplier = 0.3f + 0.7f * team->GetAiDifficulty();
-  multiplier *= 0.7f + 0.3f * GetFatigueFactorInv();
+  multiplier *= 0.7f + 0.3f * GetFatigueFactorInv(); // todo: some stats are more affected by fatigue than others
 
   return playerData->GetStat(name) * multiplier;
 }
