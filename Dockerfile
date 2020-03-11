@@ -16,10 +16,12 @@ RUN python3 -m pip install git+https://gitlab.com/awarelab/mrunner.git
 
 RUN apt-get -y install cmake build-essential libgl1-mesa-dev libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev libboost-all-dev libdirectfb-dev libst-dev mesa-utils xvfb x11vnc libsdl-sge-dev
 
+RUN python3 -m pip install psutil
 RUN python3 -m pip install git+https://github.com/piotrmilos/football.git
 RUN python3 -m pip install git+https://github.com/openai/baselines.git
-RUN python3 -m pip install ray[rllib]
-RUN python3 -m pip install psutil
+RUN python3 -m pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.9.0.dev0-cp36-cp36m-manylinux1_x86_64.whl
+RUN python3 -m pip install -U ray[rllib]
+
 RUN git clone https://github.com/piotrmilos/football.git
 
 WORKDIR '/root'
